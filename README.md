@@ -26,16 +26,34 @@ cd ~/.openclaw/skills/
 git clone https://github.com/blessonism/github-explorer-skill.git github-explorer
 ```
 
-### 依赖 Skills（可选，增强体验）
+### 依赖 Skills（强烈建议安装）
 
 本 Skill 会调用以下 OpenClaw 内置工具（无需额外安装）：`web_search`、`web_fetch`、`browser`
 
-以下 Skills 为**可选依赖**，安装后可获得更强的搜索和内容提取能力：
+以下 Skills 提供更强的搜索和内容提取能力，统一收录在 [openclaw-search-skills](https://github.com/blessonism/openclaw-search-skills) 仓库中：
 
-| Skill | 用途 | 安装 |
-|-------|------|------|
-| [search-layer](https://github.com/blessonism/search-layer-skill) | 多源搜索去重（Brave + Exa + Tavily 三源并行） | `npx skills add ...` |
-| [content-extract](https://github.com/blessonism/content-extract-skill) | 高保真内容提取（微信/知乎等反爬站点降级方案） | `npx skills add ...` |
+| Skill | 用途 |
+|-------|------|
+| [search-layer](https://github.com/blessonism/openclaw-search-skills/tree/main/search-layer) | 多源搜索去重（Brave + Exa + Tavily 三源并行） |
+| [content-extract](https://github.com/blessonism/openclaw-search-skills/tree/main/content-extract) | 高保真内容提取（微信/知乎等反爬站点降级方案） |
+| [mineru-extract](https://github.com/blessonism/openclaw-search-skills/tree/main/mineru-extract) | MinerU 官方 API 封装（content-extract 的下游） |
+
+**一键安装所有依赖：**
+
+```bash
+# 对你的 OpenClaw agent 说：
+帮我安装这个 skill：https://github.com/blessonism/openclaw-search-skills
+```
+
+或手动：
+
+```bash
+git clone https://github.com/blessonism/openclaw-search-skills.git /tmp/openclaw-search-skills
+cd ~/.openclaw/workspace/skills
+ln -s /tmp/openclaw-search-skills/search-layer search-layer
+ln -s /tmp/openclaw-search-skills/content-extract content-extract
+ln -s /tmp/openclaw-search-skills/mineru-extract mineru-extract
+```
 
 > 💡 缺少依赖 Skills 时，github-explorer 会自动降级为仅使用内置工具，核心功能不受影响。
 
