@@ -20,7 +20,10 @@ description: >
 ### Phase 1: 定位 Repo
 
 - 用 `web_search` 搜索 `site:github.com <project_name>` 确认完整 org/repo
-- 调用 `search-layer` 的 `exa_tavily_search.py` 补充获取社区链接和非 GitHub 资源
+- 用 `search-layer`（Deep 模式）补充获取社区链接和非 GitHub 资源：
+  ```bash
+  python3 skills/search-layer/scripts/search.py "<project_name> review OR 评测 OR 使用体验" --mode deep --num 5
+  ```
 - 用 `web_fetch` 抓取 repo 主页获取基础信息（README、Stars、Forks、License、最近更新）
 
 ### Phase 2: 多源采集（并行）
@@ -31,9 +34,21 @@ description: >
 |---|---|---|---|
 | GitHub Repo | `github.com/{org}/{repo}` | README、About、Contributors | `web_fetch` |
 | GitHub Issues | `github.com/{org}/{repo}/issues?q=sort:comments` | Top 3-5 高质量 Issue | `browser` |
-| 中文社区 | 微信/知乎/小红书 | 深度评测、使用经验 | `content-extract` (MinerU) |
+| 中文社区 | 微信/知乎/小红书 | 深度评测、使用经验 | `content-extract` |
 | 技术博客 | Medium/Dev.to | 技术架构分析 | `web_fetch` / `content-extract` |
-| 讨论区 | V2EX/Reddit | 用户反馈、槽点 | `search-layer` (Exa) |
+| 讨论区 | V2EX/Reddit | 用户反馈、槽点 | `search-layer`（Deep 模式） |
+
+#### search-layer 调用规范
+
+search-layer 有三种模式，github-explorer 场景下的选择：
+
+| Mode | 命令 | 何时用 |
+|------|------|--------|
+| **Fast** | `python3 skills/search-layer/scripts/search.py "<query>" --mode fast --num 5` | 快速查找单个事实/链接 |
+| **Deep** | `python3 skills/search-layer/scripts/search.py "<query>" --mode deep --num 5` | 项目调研、竞品分析（**默认用这个**） |
+| **Answer** | `python3 skills/search-layer/scripts/search.py "<query>" --mode answer --num 5` | 需要带解释的总结型问题 |
+
+降级规则：Exa/Tavily 任一 429/5xx → 继续用剩余源；脚本整体失败 → 退回 `web_search` 单源。
 
 ---
 
@@ -44,7 +59,15 @@ description: >
 2. **结构复杂**: 页面包含大量公式 (LaTeX)、复杂表格、或 `web_fetch` 返回的 Markdown 极其凌乱。
 3. **内容缺失**: `web_fetch` 因反爬返回空内容或 Challenge 页面。
 
-调用方式：`python3 /home/node/.openclaw/workspace/skills/content-extract/scripts/content_extract.py --url <URL>`
+调用方式：
+```bash
+python3 skills/content-extract/scripts/content_extract.py --url <URL>
+```
+
+content-extract 内部会：
+- 先检查域名白名单（微信/知乎等），命中则直接走 MinerU
+- 否则先用 `web_fetch` 探针，失败再 fallback 到 MinerU-HTML
+- 返回统一 JSON 合同（含 `ok`, `markdown`, `sources` 等字段）
 
 ### Phase 3: 分析研判
 
@@ -139,7 +162,20 @@ description: >
 ## Execution Notes
 
 - 优先使用 `web_search` + `web_fetch`，browser 作为备选
-- **抓取降级（强制）**：当 `web_fetch` 失败/403/反爬页/正文过短，或来源域名属于高风险站点（如微信/知乎/小红书）时：改用上层解析入口 `content-extract`（其内部会 fallback 到 MinerU-HTML），拿到更干净的 Markdown + 可追溯 sources
+- **搜索增强**：项目调研类任务默认使用 `search-layer` Deep 模式（Brave + Exa + Tavily 三源并行去重），单源失败不阻塞主流程
+- **抓取降级（强制）**：当 `web_fetch` 失败/403/反爬页/正文过短，或来源域名属于高风险站点（如微信/知乎/小红书）时：改用 `content-extract`（其内部会 fallback 到 MinerU-HTML），拿到更干净的 Markdown + 可追溯 sources
 - 并行采集不同来源以提高效率
 - 所有链接必须真实可访问，不要编造 URL
 - 中文输出，技术术语保留英文
+
+## Dependencies
+
+本 Skill 依赖以下 OpenClaw 工具和 Skills：
+
+| 依赖 | 类型 | 用途 |
+|------|------|------|
+| `web_search` | 内置工具 | Brave Search 检索 |
+| `web_fetch` | 内置工具 | 网页内容抓取 |
+| `browser` | 内置工具 | 动态页面渲染（备选） |
+| `search-layer` | Skill | 多源搜索去重（Brave + Exa + Tavily） |
+| `content-extract` | Skill | 高保真内容提取（反爬站点降级方案） |
