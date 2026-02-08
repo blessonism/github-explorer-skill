@@ -1,7 +1,5 @@
 # GitHub Explorer — 项目深度分析 Skill
 
-> README 只是门面，真正的价值藏在 Issues、Commits 和社区讨论里。
-
 GitHub Explorer 是一个 [OpenClaw](https://github.com/openclaw/openclaw) Agent Skill，能够对任意 GitHub 项目进行**多源深度分析**，输出结构化的项目研判报告。
 
 ## ✨ 核心特性
