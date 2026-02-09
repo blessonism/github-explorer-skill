@@ -20,9 +20,11 @@ description: >
 ### Phase 1: 定位 Repo
 
 - 用 `web_search` 搜索 `site:github.com <project_name>` 确认完整 org/repo
-- 用 `search-layer`（Deep 模式）补充获取社区链接和非 GitHub 资源：
+- 用 `search-layer`（Deep 模式 + 意图感知）补充获取社区链接和非 GitHub 资源：
   ```bash
-  python3 skills/search-layer/scripts/search.py "<project_name> review OR 评测 OR 使用体验" --mode deep --num 5
+  python3 skills/search-layer/scripts/search.py \
+    --queries "<project_name> review" "<project_name> 评测 使用体验" \
+    --mode deep --intent exploratory --num 5
   ```
 - 用 `web_fetch` 抓取 repo 主页获取基础信息（README、Stars、Forks、License、最近更新）
 
@@ -40,13 +42,19 @@ description: >
 
 #### search-layer 调用规范
 
-search-layer 有三种模式，github-explorer 场景下的选择：
+search-layer v2 支持意图感知评分。github-explorer 场景下的推荐用法：
 
-| Mode | 命令 | 何时用 |
-|------|------|--------|
-| **Fast** | `python3 skills/search-layer/scripts/search.py "<query>" --mode fast --num 5` | 快速查找单个事实/链接 |
-| **Deep** | `python3 skills/search-layer/scripts/search.py "<query>" --mode deep --num 5` | 项目调研、竞品分析（**默认用这个**） |
-| **Answer** | `python3 skills/search-layer/scripts/search.py "<query>" --mode answer --num 5` | 需要带解释的总结型问题 |
+| 场景 | 命令 | 说明 |
+|------|------|------|
+| **项目调研（默认）** | `python3 skills/search-layer/scripts/search.py --queries "<project> review" "<project> 评测" --mode deep --intent exploratory --num 5` | 多查询并行，按权威性排序 |
+| **最新动态** | `python3 skills/search-layer/scripts/search.py "<project> latest release" --mode deep --intent status --freshness pw --num 5` | 优先新鲜度，过滤一周内 |
+| **竞品对比** | `python3 skills/search-layer/scripts/search.py --queries "<project> vs <competitor>" "<project> alternatives" --mode deep --intent comparison --num 5` | 对比意图，关键词+权威双权重 |
+| **快速查链接** | `python3 skills/search-layer/scripts/search.py "<project> official docs" --mode fast --intent resource --num 3` | 精确匹配，最快 |
+| **社区讨论** | `python3 skills/search-layer/scripts/search.py "<project> discussion experience" --mode deep --intent exploratory --domain-boost reddit.com,news.ycombinator.com --num 5` | 加权社区站点 |
+
+**意图类型速查**：`factual`(事实) / `status`(动态) / `comparison`(对比) / `tutorial`(教程) / `exploratory`(探索) / `news`(新闻) / `resource`(资源定位)
+
+> 不带 `--intent` 时行为与 v1 完全一致（无评分，按原始顺序输出）。
 
 降级规则：Exa/Tavily 任一 429/5xx → 继续用剩余源；脚本整体失败 → 退回 `web_search` 单源。
 
@@ -171,7 +179,7 @@ content-extract 内部会：
 ## Execution Notes
 
 - 优先使用 `web_search` + `web_fetch`，browser 作为备选
-- **搜索增强**：项目调研类任务默认使用 `search-layer` Deep 模式（Brave + Exa + Tavily 三源并行去重），单源失败不阻塞主流程
+- **搜索增强**：项目调研类任务默认使用 `search-layer` v2 Deep 模式 + `--intent exploratory`（Brave + Exa + Tavily 三源并行去重 + 意图感知评分），单源失败不阻塞主流程
 - **抓取降级（强制）**：当 `web_fetch` 失败/403/反爬页/正文过短，或来源域名属于高风险站点（如微信/知乎/小红书）时：改用 `content-extract`（其内部会 fallback 到 MinerU-HTML），拿到更干净的 Markdown + 可追溯 sources
 - 并行采集不同来源以提高效率
 - 所有链接必须真实可访问，不要编造 URL
@@ -199,5 +207,5 @@ content-extract 内部会：
 | `web_search` | 内置工具 | Brave Search 检索 |
 | `web_fetch` | 内置工具 | 网页内容抓取 |
 | `browser` | 内置工具 | 动态页面渲染（备选） |
-| `search-layer` | Skill | 多源搜索去重（Brave + Exa + Tavily） |
+| `search-layer` | Skill | 多源搜索 + 意图感知评分（Brave + Exa + Tavily），v2 支持 `--intent` / `--queries` / `--freshness` |
 | `content-extract` | Skill | 高保真内容提取（反爬站点降级方案） |
