@@ -216,5 +216,5 @@ content-extract 内部会：
 | `web_search` | 内置工具 | Brave Search 检索 |
 | `web_fetch` | 内置工具 | 网页内容抓取 |
 | `browser` | 内置工具 | 动态页面渲染（备选） |
-| `search-layer` | Skill | 多源搜索 + 意图感知评分（Brave + Exa + Tavily），v2 支持 `--intent` / `--queries` / `--freshness` |
+| `search-layer` | Skill | 多源搜索 + 意图感知评分（Brave + Exa + Tavily + Grok），v2.1 支持 `--intent` / `--queries` / `--freshness` |
 | `content-extract` | Skill | 高保真内容提取（反爬站点降级方案） |
