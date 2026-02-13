@@ -30,6 +30,15 @@ description: >
 
 ### Phase 2: 多源采集（并行）
 
+**⚠️ GitHub 页面抓取规则（强制）**：GitHub repo 页面是 SPA（客户端渲染），`web_fetch` 只能拿到导航栏壳子，**禁止用 web_fetch 抓 github.com 的 repo 页面**。一律使用 GitHub API：
+- README: `curl -s -H "Authorization: token {PAT}" -H "Accept: application/vnd.github.v3.raw" "https://api.github.com/repos/{owner}/{repo}/readme"`
+- Repo 元数据: `curl -s -H "Authorization: token {PAT}" "https://api.github.com/repos/{owner}/{repo}"`
+- Issues: `curl -s -H "Authorization: token {PAT}" "https://api.github.com/repos/{owner}/{repo}/issues?state=all&sort=comments&per_page=10"`
+- Commits: `curl -s -H "Authorization: token {PAT}" "https://api.github.com/repos/{owner}/{repo}/commits?per_page=10"`
+- File tree: `curl -s -H "Authorization: token {PAT}" "https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1"`
+
+PAT 见 TOOLS.md。
+
 以下来源**按需检查**，有则采集，无则跳过：
 
 | 来源 | URL 模式 | 采集内容 | 建议工具 |
